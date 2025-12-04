@@ -12,7 +12,8 @@ export const uploadService = {
   audio: (file, type) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('type', 'audio');
+    formData.append('type', type);  // ✅ corrigido: envia "original" ou "instrumental"
+    
     return api.post('/api/upload/audio', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -21,7 +22,8 @@ export const uploadService = {
   media: (file, type) => {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('type', type); // 'video' or 'image'
+    formData.append('type', type); // 'video' ou 'image'
+
     return api.post('/api/upload/media', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
@@ -31,6 +33,7 @@ export const uploadService = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', 'lyrics');
+
     return api.post('/api/upload/lyrics', formData, {
       headers: { 'Content-Type': 'multipart/form-data' }
     });
