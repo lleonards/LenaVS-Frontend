@@ -25,7 +25,9 @@ function PreviewPanel() {
   const audioRef = useRef(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const currentAudio = previewAudioType === 'original' ? audioOriginal : audioInstrumental;
+  const currentAudio =
+    previewAudioType === 'original' ? audioOriginal : audioInstrumental;
+
   const activeVerse = verses.find(v => {
     const start = parseTime(v.startTime);
     const end = parseTime(v.endTime);
@@ -81,22 +83,28 @@ function PreviewPanel() {
 
   return (
     <div className="preview-panel">
-      <div className="preview-container" style={{ backgroundColor: background ? 'transparent' : backgroundColor }}>
+      <div
+        className="preview-container"
+        style={{
+          backgroundColor: background ? 'transparent' : backgroundColor
+        }}
+      >
         {background && background.type === 'video' && (
           <video ref={videoRef} src={background.url} className="preview-bg" />
         )}
+
         {background && background.type === 'image' && (
           <img src={background.url} className="preview-bg" alt="Background" />
         )}
-        
+
         {activeVerse && (
-          <div 
+          <div
             className="preview-verse"
             style={{
               fontFamily: activeVerse.style.fontFamily,
-              fontSize: \`\${activeVerse.style.fontSize}px\`,
+              fontSize: `${activeVerse.style.fontSize}px`,
               color: activeVerse.style.color,
-              textShadow: \`2px 2px \${activeVerse.style.outlineWidth}px \${activeVerse.style.outlineColor}\`,
+              textShadow: `2px 2px ${activeVerse.style.outlineWidth}px ${activeVerse.style.outlineColor}`,
               fontWeight: activeVerse.style.bold ? 'bold' : 'normal',
               fontStyle: activeVerse.style.italic ? 'italic' : 'normal',
               textDecoration: activeVerse.style.underline ? 'underline' : 'none',
@@ -112,10 +120,14 @@ function PreviewPanel() {
         <button className="control-btn" onClick={togglePlay}>
           {isPlaying ? <Pause size={20} /> : <Play size={20} />}
         </button>
-        
-        <button 
+
+        <button
           className="control-btn small"
-          onClick={() => setPreviewAudioType(previewAudioType === 'original' ? 'instrumental' : 'original')}
+          onClick={() =>
+            setPreviewAudioType(
+              previewAudioType === 'original' ? 'instrumental' : 'original'
+            )
+          }
           title="Alternar áudio"
         >
           <Volume2 size={16} />
@@ -123,13 +135,14 @@ function PreviewPanel() {
 
         {!background && (
           <div className="color-picker-wrapper">
-            <button 
+            <button
               className="control-btn small"
               onClick={() => setShowColorPicker(!showColorPicker)}
               title="Cor de fundo"
             >
               <Palette size={16} />
             </button>
+
             {showColorPicker && (
               <input
                 type="color"
@@ -147,9 +160,11 @@ function PreviewPanel() {
       </div>
 
       <div className="progress-bar" onClick={handleSeek}>
-        <div 
-          className="progress-fill" 
-          style={{ width: \`\${(currentTime / duration) * 100}%\` }}
+        <div
+          className="progress-fill"
+          style={{
+            width: `${(currentTime / duration) * 100}%`
+          }}
         />
       </div>
 
