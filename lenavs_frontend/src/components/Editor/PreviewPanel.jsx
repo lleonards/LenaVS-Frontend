@@ -1,8 +1,14 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { Play, Pause, Volume2, Palette } from 'lucide-react';
-import { getFileUrl } from '../../api/axios';
 import './PreviewPanel.css';
+
+// 🔥 Converte caminho relativo -> URL completa do backend Render
+const getFileUrl = (url) => {
+  if (!url) return '';
+  if (url.startsWith('http')) return url;
+  return `${import.meta.env.VITE_API_URL}${url}`;
+};
 
 function PreviewPanel() {
   const {
@@ -26,12 +32,23 @@ function PreviewPanel() {
   const audioRef = useRef(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // 🔥 CORREÇÃO IMPORTANTE — Transformar URL relativa em absoluta
-  const currentAudio = previewAudioType === 'original'
-    ? audioOriginal
-    : audioInstrumental;
+  const currentAudio =
+    previewAudioType === 'original' ? audioOriginal : audioInstrumental;
 
-  const audioUrl = currentAudio?.url ? getFileUrl(currentAudio.url) : null;
+  // 🔥 Mantém o tempo ao trocar entre Original <-> Instrumental
+  useEffect(() => {
+    if (!audioRef.current || !currentAudio) return;
+
+    const url = getFileUrl(currentAudio.url);
+    const oldTime = currentTime;
+
+    audioRef.current.src = url;
+
+    audioRef.current.onloadedmetadata = () => {
+      audioRef.current.currentTime = oldTime;
+      if (isPlaying) audioRef.current.play();
+    };
+  }, [previewAudioType]);
 
   const activeVerse = verses.find(v => {
     const start = parseTime(v.startTime);
@@ -48,11 +65,8 @@ function PreviewPanel() {
 
   const togglePlay = () => {
     if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-      } else {
-        audioRef.current.play();
-      }
+      if (isPlaying) audioRef.current.pause();
+      else audioRef.current.play();
       setIsPlaying(!isPlaying);
     }
   };
@@ -74,6 +88,7 @@ function PreviewPanel() {
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     const time = percentage * duration;
+
     if (audioRef.current) {
       audioRef.current.currentTime = time;
       setCurrentTime(time);
@@ -81,7 +96,6 @@ function PreviewPanel() {
   };
 
   const formatTime = (seconds) => {
-    if (!seconds || isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -133,29 +147,35 @@ function PreviewPanel() {
         )}
       </div>
 
+      {/* CONTROLS */}
       <div className="preview-controls">
         <button className="control-btn" onClick={togglePlay}>
           {isPlaying ? <Pause size={20} /> : <Play size={20} />}
         </button>
 
+        {/* 🔥 Botão que alterna os áudios e AGORA MOSTRA QUAL ESTÁ ATIVO */}
         <button
-          className="control-btn small"
+          className={`control-btn small audio-toggle-btn ${
+            previewAudioType === 'original' ? 'active-audio' : ''
+          }`}
           onClick={() =>
             setPreviewAudioType(
               previewAudioType === 'original' ? 'instrumental' : 'original'
             )
           }
-          title="Alternar áudio"
         >
           <Volume2 size={16} />
         </button>
+        <span className="audio-label">
+          {previewAudioType === 'original' ? 'Original' : 'Instrumental'}
+        </span>
 
+        {/* COLOR PICKER */}
         {!background && (
           <div className="color-picker-wrapper">
             <button
               className="control-btn small"
               onClick={() => setShowColorPicker(!showColorPicker)}
-              title="Cor de fundo"
             >
               <Palette size={16} />
             </button>
@@ -176,6 +196,7 @@ function PreviewPanel() {
         </div>
       </div>
 
+      {/* PROGRESS BAR */}
       <div className="progress-bar" onClick={handleSeek}>
         <div
           className="progress-fill"
@@ -185,10 +206,11 @@ function PreviewPanel() {
         />
       </div>
 
-      {audioUrl && (
+      {/* AUDIO PLAYER */}
+      {currentAudio && (
         <audio
           ref={audioRef}
-          src={audioUrl}
+          src={getFileUrl(currentAudio.url)}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
         />
