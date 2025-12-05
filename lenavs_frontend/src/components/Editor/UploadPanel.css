@@ -119,3 +119,14 @@
   border-color: var(--primary-orange);
   color: var(--primary-orange);
 }
+
+/* Indicação visual de qual áudio está selecionado */
+.audio-toggle-btn.active-audio {
+  background: var(--primary-orange);
+  transform: scale(1.1);
+}
+
+.audio-label {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+}
