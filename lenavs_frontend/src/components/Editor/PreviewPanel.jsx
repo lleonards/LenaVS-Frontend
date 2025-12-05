@@ -1,6 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { useEditorStore } from '../../store/editorStore';
 import { Play, Pause, Volume2, Palette } from 'lucide-react';
+import { getFileUrl } from '../../api/axios';
 import './PreviewPanel.css';
 
 function PreviewPanel() {
@@ -25,8 +26,12 @@ function PreviewPanel() {
   const audioRef = useRef(null);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  const currentAudio =
-    previewAudioType === 'original' ? audioOriginal : audioInstrumental;
+  // 🔥 CORREÇÃO IMPORTANTE — Transformar URL relativa em absoluta
+  const currentAudio = previewAudioType === 'original'
+    ? audioOriginal
+    : audioInstrumental;
+
+  const audioUrl = currentAudio?.url ? getFileUrl(currentAudio.url) : null;
 
   const activeVerse = verses.find(v => {
     const start = parseTime(v.startTime);
@@ -76,6 +81,7 @@ function PreviewPanel() {
   };
 
   const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -90,11 +96,22 @@ function PreviewPanel() {
         }}
       >
         {background && background.type === 'video' && (
-          <video ref={videoRef} src={background.url} className="preview-bg" />
+          <video
+            ref={videoRef}
+            src={getFileUrl(background.url)}
+            className="preview-bg"
+            autoPlay
+            loop
+            muted
+          />
         )}
 
         {background && background.type === 'image' && (
-          <img src={background.url} className="preview-bg" alt="Background" />
+          <img
+            src={getFileUrl(background.url)}
+            className="preview-bg"
+            alt="Background"
+          />
         )}
 
         {activeVerse && (
@@ -168,10 +185,10 @@ function PreviewPanel() {
         />
       </div>
 
-      {currentAudio && (
+      {audioUrl && (
         <audio
           ref={audioRef}
-          src={currentAudio.url}
+          src={audioUrl}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
         />
