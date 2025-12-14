@@ -7,13 +7,14 @@ import './Auth.css';
 function Register() {
   const navigate = useNavigate();
   const setAuth = useAuthStore(state => state.setAuth);
-  
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -25,17 +26,19 @@ function Register() {
   };
 
   const isFormValid = () => {
-    return formData.name && 
-           formData.email && 
-           formData.password && 
-           formData.confirmPassword &&
-           formData.password === formData.confirmPassword;
+    return (
+      formData.name &&
+      formData.email &&
+      formData.password &&
+      formData.confirmPassword &&
+      formData.password === formData.confirmPassword
+    );
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     if (!isFormValid()) {
       if (formData.password !== formData.confirmPassword) {
         setError('As senhas não coincidem');
@@ -44,17 +47,20 @@ function Register() {
       }
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const response = await authService.register({
         name: formData.name,
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        confirmPassword: formData.confirmPassword
       });
-      
-      setAuth(response.data.user, response.data.token);
+
+      // 🔐 Salva usuário + sessão (Supabase)
+      setAuth(response.data.user, response.data.session);
+
       navigate('/editor');
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar conta');
@@ -69,9 +75,9 @@ function Register() {
         <div className="auth-logo">
           <img src="/logo.png" alt="LenaVS" />
         </div>
-        
+
         <h1 className="auth-title">Criar Conta</h1>
-        
+
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
             <label>Nome</label>
@@ -84,7 +90,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-          
+
           <div className="form-group">
             <label>Email</label>
             <input
@@ -96,7 +102,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-          
+
           <div className="form-group">
             <label>Senha</label>
             <input
@@ -108,7 +114,7 @@ function Register() {
               disabled={loading}
             />
           </div>
-          
+
           <div className="form-group">
             <label>Confirmar Senha</label>
             <input
@@ -120,18 +126,18 @@ function Register() {
               disabled={loading}
             />
           </div>
-          
+
           {error && <div className="auth-error">{error}</div>}
-          
-          <button 
-            type="submit" 
+
+          <button
+            type="submit"
             className="auth-button"
             disabled={loading || !isFormValid()}
           >
             {loading ? 'Criando conta...' : 'Criar Conta'}
           </button>
         </form>
-        
+
         <div className="auth-footer">
           Já tem uma conta?{' '}
           <Link to="/login" className="auth-link">
