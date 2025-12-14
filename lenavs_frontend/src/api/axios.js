@@ -1,10 +1,15 @@
 import axios from 'axios';
 
-// 🔥 URL do backend — com fallback para produção
+// ======================================================
+// 🔗 URL DO BACKEND (Render)
+// ======================================================
 const API_URL =
   import.meta.env.VITE_API_URL ||
-  'https://lenavs-backend-1.onrender.com'; // <-- coloque sua URL do backend
+  'https://lenavs-backend.onrender.com';
 
+// ======================================================
+// 🚀 INSTÂNCIA AXIOS
+// ======================================================
 const api = axios.create({
   baseURL: API_URL,
   headers: {
@@ -12,31 +17,45 @@ const api = axios.create({
   }
 });
 
-// 🔥 Função que corrige URLs relativas (como /uploads/audio/abc.mp3)
-// e transforma em URLs absolutas aceitas pelo Render
+// ======================================================
+// 📁 CONVERTER PATHS DO BACKEND EM URL COMPLETA
+// ======================================================
 export const getFileUrl = (path) => {
   if (!path) return null;
 
-  // Se já for URL completa, retorna
+  // Já é uma URL completa
   if (path.startsWith('http')) return path;
 
-  // Converte caminhos relativos do backend
+  // Converte caminho relativo em absoluto
   return `${API_URL}${path.startsWith('/') ? path : '/' + path}`;
 };
 
-// 🔥 Interceptor — adiciona token no header
-api.interceptors.request.use((config) => {
-  const authData = localStorage.getItem('lenavs-auth');
-  if (authData) {
-    const { token } = JSON.parse(authData).state;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-  }
-  return config;
-});
+// ======================================================
+// 🔐 INTERCEPTOR DE REQUEST
+// (Adiciona token do Supabase automaticamente)
+// ======================================================
+api.interceptors.request.use(
+  (config) => {
+    const authData = localStorage.getItem('lenavs-auth');
 
-// 🔥 Interceptor — trata erros
+    if (authData) {
+      const parsed = JSON.parse(authData);
+      const token = parsed?.session?.access_token;
+
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+// ======================================================
+// 🚫 INTERCEPTOR DE RESPONSE
+// (Logout automático se token expirar)
+// ======================================================
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -44,6 +63,7 @@ api.interceptors.response.use(
       localStorage.removeItem('lenavs-auth');
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );
