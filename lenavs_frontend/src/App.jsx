@@ -1,22 +1,24 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useAuthStore } from './store/authStore';
+
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Editor from './pages/Editor';
-import './App.css';
 
-function PrivateRoute({ children }) {
-  const { isAuthenticated } = useAuthStore();
-  return isAuthenticated ? children : <Navigate to="/login" />;
-}
+import PrivateRoute from './components/PrivateRoute';
 
 function App() {
   return (
     <Router>
       <Routes>
+
+        {/* ROTA INICIAL → LOGIN */}
+        <Route path="/" element={<Navigate to="/login" />} />
+
+        {/* ROTAS PÚBLICAS */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+
+        {/* ROTA PROTEGIDA */}
         <Route
           path="/editor"
           element={
@@ -25,7 +27,10 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route path="/" element={<Navigate to="/editor" />} />
+
+        {/* QUALQUER OUTRA ROTA */}
+        <Route path="*" element={<Navigate to="/login" />} />
+
       </Routes>
     </Router>
   );
