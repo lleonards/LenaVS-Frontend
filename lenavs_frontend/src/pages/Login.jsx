@@ -1,45 +1,56 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { authService } from '../api/services';
-import './Auth.css';
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { useAuthStore } from '../store/authStore'
+import { authService } from '../api/services'
+import './Auth.css'
 
 function Login() {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore(state => state.setAuth);
+  const navigate = useNavigate()
+  const setAuth = useAuthStore(state => state.setAuth)
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError('')
 
     if (!email || !password) {
-      setError('Preencha todos os campos');
-      return;
+      setError('Preencha todos os campos')
+      return
     }
 
-    setLoading(true);
+    setLoading(true)
 
     try {
-      const response = await authService.login({ email, password });
+      const response = await authService.login({
+        email,
+        password
+      })
 
-      // 🔑 backend retorna: { user, session }
-      setAuth(response.data.user, response.data.session);
+      // 🔐 Garante que veio user e session
+      if (!response.data?.user || !response.data?.session) {
+        throw new Error('Resposta inválida do servidor')
+      }
 
-      navigate('/editor');
+      // 🔑 Salva no Zustand
+      setAuth(response.data.user, response.data.session)
+
+      // ✅ REDIRECT CORRETO
+      navigate('/editor', { replace: true })
     } catch (err) {
+      console.error('Erro login:', err)
+
       setError(
         err.response?.data?.message ||
         'Erro ao fazer login'
-      );
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="auth-container">
@@ -59,6 +70,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -70,6 +82,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              autoComplete="current-password"
             />
           </div>
 
@@ -92,7 +105,7 @@ function Login() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Login;
+export default Login
