@@ -7,25 +7,43 @@ export default function PrivateRoute({ children }) {
   const [session, setSession] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    let isMounted = true;
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
+    const getSession = async () => {
+      const { data, error } = await supabase.auth.getSession();
+
+      if (!isMounted) return;
+
+      if (error) {
+        setSession(null);
+      } else {
+        setSession(data?.session || null);
+      }
+
+      setLoading(false);
+    };
+
+    getSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
       (_event, session) => {
+        if (!isMounted) return;
         setSession(session);
-        setLoading(false);
       }
     );
 
     return () => {
-      listener.subscription.unsubscribe();
+      isMounted = false;
+      authListener?.subscription?.unsubscribe();
     };
   }, []);
 
   if (loading) {
-    return <p style={{ color: '#fff' }}>Carregando...</p>;
+    return (
+      <div style={{ color: '#fff', textAlign: 'center', marginTop: '40px' }}>
+        Carregando...
+      </div>
+    );
   }
 
   if (!session) {
@@ -34,4 +52,3 @@ export default function PrivateRoute({ children }) {
 
   return children;
 }
-
