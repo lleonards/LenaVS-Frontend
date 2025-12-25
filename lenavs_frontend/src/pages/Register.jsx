@@ -58,12 +58,15 @@ function Register() {
         confirmPassword: formData.confirmPassword
       });
 
-      // 🔐 Salva usuário + sessão (Supabase)
+      // 🔐 backend retorna: { user, session }
       setAuth(response.data.user, response.data.session);
 
       navigate('/editor');
     } catch (err) {
-      setError(err.response?.data?.error || 'Erro ao criar conta');
+      setError(
+        err.response?.data?.message ||
+        'Erro ao criar conta'
+      );
     } finally {
       setLoading(false);
     }
