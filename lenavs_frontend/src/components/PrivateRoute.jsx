@@ -1,14 +1,37 @@
+import { useEffect, useState } from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
+import { supabase } from '../utils/supabaseClient';
 
-function PrivateRoute({ children }) {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+export default function PrivateRoute({ children }) {
+  const [loading, setLoading] = useState(true);
+  const [session, setSession] = useState(null);
 
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setSession(session);
+        setLoading(false);
+      }
+    );
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  if (loading) {
+    return <p style={{ color: '#fff' }}>Carregando...</p>;
+  }
+
+  if (!session) {
+    return <Navigate to="/login" replace />;
   }
 
   return children;
 }
 
-export default PrivateRoute;
