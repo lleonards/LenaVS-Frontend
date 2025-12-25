@@ -5,33 +5,36 @@ import Register from './pages/Register';
 import Editor from './pages/Editor';
 
 import PrivateRoute from './components/PrivateRoute';
+import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
     <Router>
-      <Routes>
+      <AuthProvider>
+        <Routes>
 
-        {/* ROTA INICIAL → LOGIN */}
-        <Route path="/" element={<Navigate to="/login" />} />
+          {/* ROTA INICIAL */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
 
-        {/* ROTAS PÚBLICAS */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+          {/* ROTAS PÚBLICAS */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* ROTA PROTEGIDA */}
-        <Route
-          path="/editor"
-          element={
-            <PrivateRoute>
-              <Editor />
-            </PrivateRoute>
-          }
-        />
+          {/* ROTA PROTEGIDA */}
+          <Route
+            path="/editor"
+            element={
+              <PrivateRoute>
+                <Editor />
+              </PrivateRoute>
+            }
+          />
 
-        {/* QUALQUER OUTRA ROTA */}
-        <Route path="*" element={<Navigate to="/login" />} />
+          {/* FALLBACK */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
 
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </Router>
   );
 }
