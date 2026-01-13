@@ -1,116 +1,104 @@
-import React, { createContext, useContext, useState, useEffect } from 'react'
+import React, { createContext, useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 
 const AuthContext = createContext({})
+
+const API_URL =
+  import.meta.env.VITE_API_URL || 'https://lenavs-backend.onrender.com'
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [trialExpired, setTrialExpired] = useState(false)
 
-  const API_URL =
-    import.meta.env.VITE_API_URL || 'https://lenavs-backend.onrender.com'
-
-  // -----------------------------
-  // CHECK USER ON APP LOAD
-  // -----------------------------
+  // --------------------------------------------------
+  // CHECK SESSION ON APP LOAD
+  // --------------------------------------------------
   useEffect(() => {
-    const token = localStorage.getItem('supabase.auth.token')
+    const stored = localStorage.getItem('lenavs-auth')
 
-    if (!token) {
+    if (!stored) {
       setLoading(false)
       return
     }
 
-    checkSession(token)
+    const { token } = JSON.parse(stored)
+    verifySession(token)
   }, [])
 
-  // -----------------------------
-  // CHECK SESSION
-  // -----------------------------
-  const checkSession = async (token) => {
+  // --------------------------------------------------
+  // VERIFY SESSION (BACKEND)
+  // --------------------------------------------------
+  const verifySession = async (token) => {
     try {
-      const response = await axios.get(`${API_URL}/api/auth/me`, {
+      const res = await axios.get(`${API_URL}/api/auth/verify`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       })
 
-      setUser(response.data.user)
-    } catch (error) {
-      handleApiError(error)
-      localStorage.removeItem('supabase.auth.token')
+      setUser({
+        id: res.data.userId,
+      })
+    } catch (err) {
+      localStorage.removeItem('lenavs-auth')
       setUser(null)
     } finally {
       setLoading(false)
     }
   }
 
-  // -----------------------------
-  // HANDLE API ERRORS
-  // -----------------------------
-  const handleApiError = (error) => {
-    if (error?.response?.data?.code === 'TRIAL_EXPIRED') {
-      setTrialExpired(true)
-    }
-  }
-
-  // -----------------------------
+  // --------------------------------------------------
   // LOGIN
-  // -----------------------------
+  // --------------------------------------------------
   const login = async (email, password) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/login`, {
-        email,
-        password
+    const res = await axios.post(`${API_URL}/api/auth/login`, {
+      email,
+      password,
+    })
+
+    const token = res.data.session.access_token
+
+    localStorage.setItem(
+      'lenavs-auth',
+      JSON.stringify({
+        token,
+        userId: res.data.user.id,
       })
+    )
 
-      localStorage.setItem(
-        'supabase.auth.token',
-        response.data.session.access_token
-      )
+    setUser(res.data.user)
+    setTrialExpired(false)
 
-      setUser(response.data.user)
-      setTrialExpired(false)
-
-      return response.data
-    } catch (error) {
-      handleApiError(error)
-      throw error
-    }
+    return res.data
   }
 
-  // -----------------------------
+  // --------------------------------------------------
   // REGISTER
-  // -----------------------------
+  // --------------------------------------------------
   const register = async (name, email, password, confirmPassword) => {
-    try {
-      const response = await axios.post(`${API_URL}/api/auth/register`, {
-        name,
-        email,
-        password,
-        confirmPassword
-      })
+    const res = await axios.post(`${API_URL}/api/auth/register`, {
+      name,
+      email,
+      password,
+      confirmPassword,
+    })
 
-      return response.data
-    } catch (error) {
-      handleApiError(error)
-      throw error
-    }
+    return res.data
   }
 
-  // -----------------------------
+  // --------------------------------------------------
   // LOGOUT
-  // -----------------------------
+  // --------------------------------------------------
   const logout = () => {
-    localStorage.removeItem('supabase.auth.token')
+    localStorage.removeItem('lenavs-auth')
     setUser(null)
     setTrialExpired(false)
   }
 
-  // -----------------------------
-  // CONTEXT VALUE
-  // -----------------------------
+  // --------------------------------------------------
+  // CONTEXT
+  // --------------------------------------------------
   return (
     <AuthContext.Provider
       value={{
@@ -119,7 +107,7 @@ export function AuthProvider({ children }) {
         trialExpired,
         login,
         register,
-        logout
+        logout,
       }}
     >
       {children}
