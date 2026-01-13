@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import axios from 'axios'
 
-const AuthContext = createContext({})
+const AuthContext = createContext(null)
 
 const API_URL =
   import.meta.env.VITE_API_URL || 'https://lenavs-backend.onrender.com'
@@ -9,10 +9,9 @@ const API_URL =
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [trialExpired, setTrialExpired] = useState(false)
 
   // --------------------------------------------------
-  // CHECK SESSION ON APP LOAD
+  // LOAD USER FROM LOCALSTORAGE
   // --------------------------------------------------
   useEffect(() => {
     const stored = localStorage.getItem('lenavs-auth')
@@ -23,24 +22,23 @@ export function AuthProvider({ children }) {
     }
 
     const { token } = JSON.parse(stored)
-    verifySession(token)
+    loadUser(token)
   }, [])
 
   // --------------------------------------------------
-  // VERIFY SESSION (BACKEND)
+  // LOAD USER FROM BACKEND
   // --------------------------------------------------
-  const verifySession = async (token) => {
+  const loadUser = async (token) => {
     try {
-      const res = await axios.get(`${API_URL}/api/auth/verify`, {
+      const res = await axios.get(`${API_URL}/api/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       })
 
-      setUser({
-        id: res.data.userId,
-      })
+      setUser(res.data.user)
     } catch (err) {
+      console.error('Sessão inválida:', err)
       localStorage.removeItem('lenavs-auth')
       setUser(null)
     } finally {
@@ -57,20 +55,16 @@ export function AuthProvider({ children }) {
       password,
     })
 
-    const token = res.data.session.access_token
+    const { user, token } = res.data
 
     localStorage.setItem(
       'lenavs-auth',
-      JSON.stringify({
-        token,
-        userId: res.data.user.id,
-      })
+      JSON.stringify({ token })
     )
 
-    setUser(res.data.user)
-    setTrialExpired(false)
+    setUser(user)
 
-    return res.data
+    return user
   }
 
   // --------------------------------------------------
@@ -93,18 +87,16 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem('lenavs-auth')
     setUser(null)
-    setTrialExpired(false)
   }
 
   // --------------------------------------------------
-  // CONTEXT
+  // CONTEXT VALUE
   // --------------------------------------------------
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
-        trialExpired,
         login,
         register,
         logout,
@@ -118,3 +110,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext)
 }
+
