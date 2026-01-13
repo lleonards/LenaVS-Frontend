@@ -30,22 +30,25 @@ function Login() {
         password
       })
 
-      // 🔐 Garante que veio user e session
-      if (!response.data?.user || !response.data?.session) {
-        throw new Error('Resposta inválida do servidor')
+      const { user, session } = response.data || {}
+
+      // ✅ VALIDAÇÃO FORTE
+      if (!user || !session || !session.access_token) {
+        throw new Error('Sessão inválida')
       }
 
-      // 🔑 Salva no Zustand
-      setAuth(response.data.user, response.data.session)
+      // ✅ SALVA AUTH
+      setAuth(user, session)
 
-      // ✅ REDIRECT CORRETO
+      // ✅ REDIRECIONA SOMENTE SE TUDO DEU CERTO
       navigate('/editor', { replace: true })
     } catch (err) {
       console.error('Erro login:', err)
 
+      // ❌ NÃO REDIRECIONA
       setError(
         err.response?.data?.message ||
-        'Erro ao fazer login'
+        'Email ou senha inválidos'
       )
     } finally {
       setLoading(false)
