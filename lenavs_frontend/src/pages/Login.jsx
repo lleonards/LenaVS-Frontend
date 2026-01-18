@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { supabase } from '../utils/supabaseClient'
 import { useAuthStore } from '../store/authStore'
-import { authService } from '../api/services'
 import './Auth.css'
 
 function Login() {
@@ -25,30 +25,32 @@ function Login() {
     setLoading(true)
 
     try {
-      const response = await authService.login({
+      // 🔐 LOGIN PELO SUPABASE
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
-        password
+        password,
       })
 
-      const { user, session } = response.data || {}
+      if (error) {
+        throw error
+      }
 
-      // ✅ VALIDAÇÃO FORTE
-      if (!user || !session || !session.access_token) {
+      if (!data?.user || !data?.session) {
         throw new Error('Sessão inválida')
       }
 
-      // ✅ SALVA AUTH
-      setAuth(user, session)
+      // ✅ SALVA NO ZUSTAND
+      setAuth(data.user, data.session)
 
-      // ✅ REDIRECIONA SOMENTE SE TUDO DEU CERTO
+      // ✅ REDIRECIONA
       navigate('/editor', { replace: true })
     } catch (err) {
-      console.error('Erro login:', err)
+      console.error('LOGIN ERROR:', err)
 
-      // ❌ NÃO REDIRECIONA
       setError(
-        err.response?.data?.message ||
-        'Email ou senha inválidos'
+        err.message === 'Invalid login credentials'
+          ? 'Email ou senha inválidos'
+          : 'Erro ao fazer login'
       )
     } finally {
       setLoading(false)
