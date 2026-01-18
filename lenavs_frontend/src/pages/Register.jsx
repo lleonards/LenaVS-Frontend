@@ -1,76 +1,91 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
-import { authService } from '../api/services';
-import './Auth.css';
+import React, { useState } from 'react'
+import { useNavigate, Link } from 'react-router-dom'
+import { supabase } from '../utils/supabaseClient'
+import { useAuthStore } from '../store/authStore'
+import './Auth.css'
 
 function Register() {
-  const navigate = useNavigate();
-  const setAuth = useAuthStore(state => state.setAuth);
+  const navigate = useNavigate()
+  const setAuth = useAuthStore(state => state.setAuth)
 
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
-    confirmPassword: ''
-  });
+    confirmPassword: '',
+  })
 
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
-    });
-  };
-
-  const isFormValid = () => {
-    return (
-      formData.name &&
-      formData.email &&
-      formData.password &&
-      formData.confirmPassword &&
-      formData.password === formData.confirmPassword
-    );
-  };
+      [e.target.name]: e.target.value,
+    })
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError('')
 
-    if (!isFormValid()) {
-      if (formData.password !== formData.confirmPassword) {
-        setError('As senhas não coincidem');
-      } else {
-        setError('Preencha todos os campos');
-      }
-      return;
+    const { name, email, password, confirmPassword } = formData
+
+    if (!name || !email || !password || !confirmPassword) {
+      setError('Preencha todos os campos')
+      return
     }
 
-    setLoading(true);
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem')
+      return
+    }
+
+    setLoading(true)
 
     try {
-      const response = await authService.register({
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        confirmPassword: formData.confirmPassword
-      });
+      // 🔐 CRIA USUÁRIO NO SUPABASE AUTH
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name, // metadata
+          },
+        },
+      })
 
-      // 🔐 backend retorna: { user, session }
-      setAuth(response.data.user, response.data.session);
+      if (error) {
+        throw error
+      }
 
-      navigate('/editor');
+      if (!data?.user) {
+        throw new Error('Erro ao criar usuário')
+      }
+
+      // ⚠️ Se email confirmation estiver ATIVO
+      if (!data.session) {
+        navigate('/login')
+        return
+      }
+
+      // ✅ SALVA NO ZUSTAND
+      setAuth(data.user, data.session)
+
+      // ✅ REDIRECIONA
+      navigate('/editor', { replace: true })
     } catch (err) {
+      console.error('REGISTER ERROR:', err)
+
       setError(
-        err.response?.data?.message ||
-        'Erro ao criar conta'
-      );
+        err.message === 'User already registered'
+          ? 'Este email já está cadastrado'
+          : 'Erro ao criar conta'
+      )
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
     <div className="auth-container">
@@ -103,6 +118,7 @@ function Register() {
               value={formData.email}
               onChange={handleChange}
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -115,6 +131,7 @@ function Register() {
               value={formData.password}
               onChange={handleChange}
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -127,6 +144,7 @@ function Register() {
               value={formData.confirmPassword}
               onChange={handleChange}
               disabled={loading}
+              autoComplete="new-password"
             />
           </div>
 
@@ -135,7 +153,7 @@ function Register() {
           <button
             type="submit"
             className="auth-button"
-            disabled={loading || !isFormValid()}
+            disabled={loading}
           >
             {loading ? 'Criando conta...' : 'Criar Conta'}
           </button>
@@ -149,7 +167,7 @@ function Register() {
         </div>
       </div>
     </div>
-  );
+  )
 }
 
-export default Register;
+export default Register
