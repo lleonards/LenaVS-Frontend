@@ -25,7 +25,7 @@ function Login() {
     setLoading(true)
 
     try {
-      // 🔐 LOGIN PELO SUPABASE
+      // 🔐 LOGIN VIA SUPABASE AUTH
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -47,8 +47,10 @@ function Login() {
     } catch (err) {
       console.error('LOGIN ERROR:', err)
 
+      const message = err.message?.toLowerCase() || ''
+
       setError(
-        err.message === 'Invalid login credentials'
+        message.includes('invalid')
           ? 'Email ou senha inválidos'
           : 'Erro ao fazer login'
       )
