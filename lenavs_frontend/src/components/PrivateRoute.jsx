@@ -1,23 +1,14 @@
 import { Navigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+import { useAuthStore } from '../store/authStore'
 
 export default function PrivateRoute({ children }) {
-  const { user, loading } = useAuth()
+  const { isAuthenticated } = useAuthStore()
 
-  // Ainda verificando sessão
-  if (loading) {
-    return (
-      <div style={{ color: '#fff', textAlign: 'center', marginTop: '40px' }}>
-        Carregando...
-      </div>
-    )
-  }
-
-  // Não autenticado
-  if (!user) {
+  // ❌ Não logado → login
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />
   }
 
-  // Autenticado
+  // ✅ Logado
   return children
 }
