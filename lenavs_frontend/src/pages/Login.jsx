@@ -25,30 +25,23 @@ function Login() {
     setLoading(true)
 
     try {
-      // 🔐 LOGIN VIA SUPABASE AUTH
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
 
-      if (error) {
-        throw error
-      }
-
+      if (error) throw error
       if (!data?.user || !data?.session) {
         throw new Error('Sessão inválida')
       }
 
-      // ✅ SALVA NO ZUSTAND
       setAuth(data.user, data.session)
-
-      // ✅ REDIRECIONA
       navigate('/editor', { replace: true })
+
     } catch (err) {
       console.error('LOGIN ERROR:', err)
 
       const message = err.message?.toLowerCase() || ''
-
       setError(
         message.includes('invalid')
           ? 'Email ou senha inválidos'
@@ -77,7 +70,6 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              autoComplete="email"
             />
           </div>
 
@@ -89,8 +81,14 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              autoComplete="current-password"
             />
+          </div>
+
+          {/* ESQUECI A SENHA */}
+          <div className="auth-forgot">
+            <Link to="/forgot-password" className="auth-link">
+              Esqueci minha senha
+            </Link>
           </div>
 
           {error && <div className="auth-error">{error}</div>}
