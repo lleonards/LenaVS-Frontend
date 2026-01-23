@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
 import { useAuthStore } from '../store/authStore'
@@ -26,7 +26,7 @@ function Login() {
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       })
 
@@ -35,13 +35,17 @@ function Login() {
         throw new Error('Sessão inválida')
       }
 
+      // Salva usuário + sessão
       setAuth(data.user, data.session)
+
+      // Redireciona
       navigate('/editor', { replace: true })
 
     } catch (err) {
       console.error('LOGIN ERROR:', err)
 
       const message = err.message?.toLowerCase() || ''
+
       setError(
         message.includes('invalid')
           ? 'Email ou senha inválidos'
@@ -55,6 +59,7 @@ function Login() {
   return (
     <div className="auth-container">
       <div className="auth-box">
+
         <div className="auth-logo">
           <img src="/logo.png" alt="LenaVS" />
         </div>
@@ -70,6 +75,7 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
+              autoComplete="email"
             />
           </div>
 
@@ -81,6 +87,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              autoComplete="current-password"
             />
           </div>
 
@@ -108,6 +115,7 @@ function Login() {
             Registre-se
           </Link>
         </div>
+
       </div>
     </div>
   )
