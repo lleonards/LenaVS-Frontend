@@ -1,59 +1,39 @@
-import React, { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { supabase } from '../utils/supabaseClient'
-import { useAuthStore } from '../store/authStore'
 import './Auth.css'
 
-function Login() {
-  const navigate = useNavigate()
-  const setAuth = useAuthStore(state => state.setAuth)
-
+function ForgotPassword() {
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
+    setMessage('')
 
-    if (!email || !password) {
-      setError('Preencha todos os campos')
+    if (!email) {
+      setError('Informe seu email')
       return
     }
 
     setLoading(true)
 
     try {
-      // 🔐 LOGIN VIA SUPABASE AUTH
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
       })
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
-      if (!data?.user || !data?.session) {
-        throw new Error('Sessão inválida')
-      }
-
-      // ✅ SALVA NO ZUSTAND
-      setAuth(data.user, data.session)
-
-      // ✅ REDIRECIONA
-      navigate('/editor', { replace: true })
-    } catch (err) {
-      console.error('LOGIN ERROR:', err)
-
-      const message = err.message?.toLowerCase() || ''
-
-      setError(
-        message.includes('invalid')
-          ? 'Email ou senha inválidos'
-          : 'Erro ao fazer login'
+      setMessage(
+        'Se esse email existir, enviamos um link para redefinir sua senha.'
       )
+    } catch (err) {
+      console.error(err)
+      setError('Erro ao enviar email de recuperação')
     } finally {
       setLoading(false)
     }
@@ -66,7 +46,7 @@ function Login() {
           <img src="/logo.png" alt="LenaVS" />
         </div>
 
-        <h1 className="auth-title">Login</h1>
+        <h1 className="auth-title">Esqueci minha senha</h1>
 
         <form onSubmit={handleSubmit} className="auth-form">
           <div className="form-group">
@@ -77,37 +57,24 @@ function Login() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}
-              autoComplete="email"
-            />
-          </div>
-
-          <div className="form-group">
-            <label>Senha</label>
-            <input
-              type="password"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              autoComplete="current-password"
             />
           </div>
 
           {error && <div className="auth-error">{error}</div>}
+          {message && <div className="auth-success">{message}</div>}
 
           <button
             type="submit"
             className="auth-button"
             disabled={loading}
           >
-            {loading ? 'Entrando...' : 'Entrar'}
+            {loading ? 'Enviando...' : 'Enviar link'}
           </button>
         </form>
 
         <div className="auth-footer">
-          Não tem uma conta?{' '}
-          <Link to="/register" className="auth-link">
-            Registre-se
+          <Link to="/login" className="auth-link">
+            Voltar para o login
           </Link>
         </div>
       </div>
@@ -115,4 +82,4 @@ function Login() {
   )
 }
 
-export default Login
+export default ForgotPassword
