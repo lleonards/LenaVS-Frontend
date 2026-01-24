@@ -51,9 +51,17 @@ function ExportPanel() {
         videoDuration: duration
       });
 
-      const downloadUrl = response.data.downloadUrl;
-      
-      // Create download link
+      const filePath = response?.data?.downloadUrl;
+
+      if (!filePath) {
+        throw new Error('URL de download não retornada pelo servidor');
+      }
+
+      // 🔥 GARANTE URL ABSOLUTA (corrige o bug real)
+      const downloadUrl = filePath.startsWith('http')
+        ? filePath
+        : `${window.location.origin}${filePath}`;
+
       const a = document.createElement('a');
       a.href = downloadUrl;
       a.download = `${projectName}.mp4`;
@@ -63,7 +71,11 @@ function ExportPanel() {
 
       alert('Vídeo gerado com sucesso!');
     } catch (error) {
-      alert('Erro ao gerar vídeo: ' + (error.response?.data?.error || error.message));
+      console.error('EXPORT ERROR:', error);
+      alert(
+        'Erro ao gerar vídeo: ' +
+          (error.response?.data?.error || error.message)
+      );
     } finally {
       setExporting(false);
     }
@@ -72,7 +84,7 @@ function ExportPanel() {
   return (
     <div className="export-panel">
       <h2 className="panel-title">Exportar Vídeo</h2>
-      
+
       <div className="export-section">
         <label className="export-label">
           <FileVideo size={18} />
@@ -92,7 +104,7 @@ function ExportPanel() {
           <Music size={18} />
           Áudio para Exportar
         </label>
-        
+
         <div className="audio-options">
           <label className="radio-option">
             <input
@@ -105,7 +117,7 @@ function ExportPanel() {
             />
             <span>Música Original</span>
           </label>
-          
+
           <label className="radio-option">
             <input
               type="radio"
@@ -127,12 +139,14 @@ function ExportPanel() {
             {audioOriginal || audioInstrumental ? '✓' : '✗'}
           </span>
         </div>
+
         <div className="info-row">
           <span>Letras:</span>
           <span className={verses.length > 0 ? 'status-ok' : 'status-missing'}>
             {verses.length > 0 ? `${verses.length} estrofe(s)` : '✗'}
           </span>
         </div>
+
         <div className="info-row">
           <span>Background:</span>
           <span className="status-optional">
@@ -144,7 +158,12 @@ function ExportPanel() {
       <button
         className="export-button"
         onClick={handleExport}
-        disabled={exporting || !projectName || (!audioOriginal && !audioInstrumental) || verses.length === 0}
+        disabled={
+          exporting ||
+          !projectName ||
+          (!audioOriginal && !audioInstrumental) ||
+          verses.length === 0
+        }
       >
         {exporting ? (
           <>
