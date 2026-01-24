@@ -1,11 +1,15 @@
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Editor from './pages/Editor';
+// PÁGINAS
+import Login from './pages/Login'
+import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import Editor from './pages/Editor'
 
-import PrivateRoute from './components/PrivateRoute';
-import { AuthProvider } from './context/AuthContext';
+// AUTH
+import PrivateRoute from './components/PrivateRoute'
+import { AuthProvider } from './context/AuthContext'
 
 function App() {
   return (
@@ -19,6 +23,8 @@ function App() {
           {/* ROTAS PÚBLICAS */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* ROTA PROTEGIDA */}
           <Route
@@ -36,7 +42,7 @@ function App() {
         </Routes>
       </AuthProvider>
     </Router>
-  );
+  )
 }
 
-export default App;
+export default App
