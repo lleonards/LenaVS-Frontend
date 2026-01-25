@@ -1,8 +1,16 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { useDropzone } from 'react-dropzone';
 import { useEditorStore } from '../../store/editorStore';
 import { uploadService } from '../../api/services';
-import { Music, FileMusic, Image, Video, FileText, Upload, Check } from 'lucide-react';
+import {
+  Music,
+  FileMusic,
+  Image,
+  Video,
+  FileText,
+  Upload,
+  Check
+} from 'lucide-react';
 import './UploadPanel.css';
 
 function UploadPanel() {
@@ -16,72 +24,91 @@ function UploadPanel() {
     setVerses
   } = useEditorStore();
 
+  // ===============================
+  // AUDIO
+  // ===============================
   const handleAudioUpload = async (file, type) => {
     try {
-      const response = await uploadService.audio(file, type);
+      const response = await uploadService.audio(file);
+
       const fileData = {
         ...response.data.file,
         url: response.data.file.path
       };
-      
+
       if (type === 'original') {
         setAudioOriginal(fileData);
       } else {
         setAudioInstrumental(fileData);
       }
     } catch (error) {
+      console.error('Erro upload áudio:', error);
       alert('Erro ao fazer upload do áudio');
     }
   };
 
+  // ===============================
+  // MEDIA (VIDEO / IMAGE)
+  // ===============================
   const handleMediaUpload = async (file, type) => {
     try {
       const response = await uploadService.media(file, type);
+
       const fileData = {
         ...response.data.file,
-        url: response.data.file.path
+        url: response.data.file.path,
+        type
       };
-      setBackground(fileData, type);
+
+      setBackground(fileData);
     } catch (error) {
+      console.error('Erro upload mídia:', error);
       alert('Erro ao fazer upload da mídia');
     }
   };
 
+  // ===============================
+  // LYRICS FILE
+  // ===============================
   const handleLyricsUpload = async (file) => {
     try {
       const response = await uploadService.lyricsFile(file);
       setVerses(response.data.lyrics);
     } catch (error) {
-      alert('Erro ao fazer upload da letra. Use arquivo .txt por enquanto.');
+      console.error('Erro upload letra:', error);
+      alert('Erro ao fazer upload da letra');
     }
   };
 
+  // ===============================
+  // DROPZONES
+  // ===============================
   const AudioOriginalDropzone = useDropzone({
-    accept: { 'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma'] },
+    accept: { 'audio/*': [] },
     maxFiles: 1,
     onDrop: files => handleAudioUpload(files[0], 'original')
   });
 
   const AudioInstrumentalDropzone = useDropzone({
-    accept: { 'audio/*': ['.mp3', '.wav', '.ogg', '.m4a', '.aac', '.flac', '.wma'] },
+    accept: { 'audio/*': [] },
     maxFiles: 1,
     onDrop: files => handleAudioUpload(files[0], 'instrumental')
   });
 
   const VideoDropzone = useDropzone({
-    accept: { 'video/*': ['.mp4', '.mov', '.avi', '.mkv'] },
+    accept: { 'video/*': [] },
     maxFiles: 1,
     onDrop: files => handleMediaUpload(files[0], 'video')
   });
 
   const ImageDropzone = useDropzone({
-    accept: { 'image/*': ['.jpg', '.jpeg', '.png'] },
+    accept: { 'image/*': [] },
     maxFiles: 1,
     onDrop: files => handleMediaUpload(files[0], 'image')
   });
 
   const LyricsDropzone = useDropzone({
-    accept: { 
+    accept: {
       'text/plain': ['.txt'],
       'application/pdf': ['.pdf'],
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
@@ -90,17 +117,20 @@ function UploadPanel() {
     onDrop: files => handleLyricsUpload(files[0])
   });
 
+  // ===============================
+  // RENDER
+  // ===============================
   return (
     <div className="upload-panel">
       <h2 className="panel-title">Arquivos</h2>
-      
+
+      {/* AUDIO ORIGINAL */}
       <div className="upload-section">
         <h3 className="section-title">
-          <Music size={18} />
-          Música Original
+          <Music size={18} /> Música Original
         </h3>
-        <div 
-          {...AudioOriginalDropzone.getRootProps()} 
+        <div
+          {...AudioOriginalDropzone.getRootProps()}
           className={`dropzone ${audioOriginal ? 'uploaded' : ''}`}
         >
           <input {...AudioOriginalDropzone.getInputProps()} />
@@ -118,13 +148,13 @@ function UploadPanel() {
         </div>
       </div>
 
+      {/* AUDIO INSTRUMENTAL */}
       <div className="upload-section">
         <h3 className="section-title">
-          <FileMusic size={18} />
-          Música Instrumental
+          <FileMusic size={18} /> Música Instrumental
         </h3>
-        <div 
-          {...AudioInstrumentalDropzone.getRootProps()} 
+        <div
+          {...AudioInstrumentalDropzone.getRootProps()}
           className={`dropzone ${audioInstrumental ? 'uploaded' : ''}`}
         >
           <input {...AudioInstrumentalDropzone.getInputProps()} />
@@ -142,13 +172,13 @@ function UploadPanel() {
         </div>
       </div>
 
+      {/* VIDEO */}
       <div className="upload-section">
         <h3 className="section-title">
-          <Video size={18} />
-          Vídeo (Opcional)
+          <Video size={18} /> Vídeo (Opcional)
         </h3>
-        <div 
-          {...VideoDropzone.getRootProps()} 
+        <div
+          {...VideoDropzone.getRootProps()}
           className={`dropzone ${background?.type === 'video' ? 'uploaded' : ''}`}
         >
           <input {...VideoDropzone.getInputProps()} />
@@ -166,13 +196,13 @@ function UploadPanel() {
         </div>
       </div>
 
+      {/* IMAGE */}
       <div className="upload-section">
         <h3 className="section-title">
-          <Image size={18} />
-          Imagem (Opcional)
+          <Image size={18} /> Imagem (Opcional)
         </h3>
-        <div 
-          {...ImageDropzone.getRootProps()} 
+        <div
+          {...ImageDropzone.getRootProps()}
           className={`dropzone ${background?.type === 'image' ? 'uploaded' : ''}`}
         >
           <input {...ImageDropzone.getInputProps()} />
@@ -190,28 +220,30 @@ function UploadPanel() {
         </div>
       </div>
 
+      {/* LYRICS */}
       <div className="upload-section">
         <h3 className="section-title">
-          <FileText size={18} />
-          Letra
+          <FileText size={18} /> Letra
         </h3>
-        <div 
-          {...LyricsDropzone.getRootProps()} 
-          className="dropzone"
-        >
+        <div {...LyricsDropzone.getRootProps()} className="dropzone">
           <input {...LyricsDropzone.getInputProps()} />
           <Upload size={24} />
           <span>Arraste arquivo ou clique</span>
         </div>
+
         <div className="divider">ou</div>
-        <button 
+
+        <button
           className="text-button"
-          onClick={() => {
+          onClick={async () => {
             const text = prompt('Cole ou digite a letra da música:');
-            if (text) {
-              uploadService.lyricsText(text)
-                .then(response => setVerses(response.data.lyrics))
-                .catch(() => alert('Erro ao processar letra'));
+            if (!text) return;
+
+            try {
+              const response = await uploadService.lyricsText(text);
+              setVerses(response.data.lyrics);
+            } catch {
+              alert('Erro ao processar letra');
             }
           }}
         >
