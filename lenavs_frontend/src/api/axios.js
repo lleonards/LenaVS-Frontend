@@ -1,4 +1,4 @@
-esse é o axios.js "import axios from 'axios';
+import axios from 'axios';
 
 // ======================================================
 // 🔗 URL DO BACKEND (Render)
@@ -9,12 +9,10 @@ const API_URL =
 
 // ======================================================
 // 🚀 INSTÂNCIA AXIOS
+// ❗ NÃO definir Content-Type globalmente
 // ======================================================
 const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    'Content-Type': 'application/json'
-  }
+  baseURL: API_URL
 });
 
 // ======================================================
@@ -23,10 +21,8 @@ const api = axios.create({
 export const getFileUrl = (path) => {
   if (!path) return null;
 
-  // Já é uma URL completa
   if (path.startsWith('http')) return path;
 
-  // Converte caminho relativo em absoluto
   return `${API_URL}${path.startsWith('/') ? path : '/' + path}`;
 };
 
@@ -39,11 +35,15 @@ api.interceptors.request.use(
     const authData = localStorage.getItem('lenavs-auth');
 
     if (authData) {
-      const parsed = JSON.parse(authData);
-      const token = parsed?.session?.access_token;
+      try {
+        const parsed = JSON.parse(authData);
+        const token = parsed?.session?.access_token;
 
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+      } catch (err) {
+        console.warn('Erro ao ler token:', err);
       }
     }
 
@@ -68,4 +68,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;" me mande completo e corrigido
+export default api;
