@@ -1,4 +1,4 @@
-import axios from 'axios';
+esse é o axios.js "import axios from 'axios';
 
 // ======================================================
 // 🔗 URL DO BACKEND (Render)
@@ -68,4 +68,4 @@ api.interceptors.response.use(
   }
 );
 
-export default api;
+export default api;" me mande completo e corrigido
