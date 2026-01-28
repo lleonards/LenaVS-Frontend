@@ -26,20 +26,32 @@ export const getFileUrl = (path) => {
 
 // ======================================================
 // 🔐 REQUEST INTERCEPTOR
+// (TOKEN CORRETO DO SUPABASE)
 // ======================================================
 api.interceptors.request.use(
   (config) => {
-    const authData = localStorage.getItem('lenavs-auth')
+    try {
+      /**
+       * 🔴 IMPORTANTE:
+       * O Supabase salva a sessão assim:
+       * localStorage key começa com "sb-"
+       */
+      const supabaseSessionKey = Object.keys(localStorage).find(key =>
+        key.startsWith('sb-')
+      )
 
-    if (authData) {
-      try {
-        const parsed = JSON.parse(authData)
-        const token = parsed?.session?.access_token
+      if (supabaseSessionKey) {
+        const sessionRaw = localStorage.getItem(supabaseSessionKey)
+        const session = JSON.parse(sessionRaw)
+
+        const token = session?.access_token
 
         if (token) {
           config.headers.Authorization = `Bearer ${token}`
         }
-      } catch {}
+      }
+    } catch (err) {
+      console.warn('Erro ao anexar token do Supabase:', err)
     }
 
     return config
@@ -54,9 +66,11 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('lenavs-auth')
+      // limpa tudo para evitar sessão quebrada
+      localStorage.clear()
       window.location.href = '/login'
     }
+
     return Promise.reject(error)
   }
 )
