@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { v4 as uuidv4 } from 'uuid';
 
 // 🎨 ESTILO PADRÃO (garantia total)
 const DEFAULT_STYLE = {
@@ -17,13 +16,14 @@ const DEFAULT_STYLE = {
 
 // ✂️ Processa letra colada manualmente
 const processPastedLyrics = (text) => {
-  if (!text || typeof text !== 'string') return [];
+  if (!text || typeof text !== 'string') {
+    return { verses: [], autoSeparated: false };
+  }
 
   const normalized = text.replace(/\r\n/g, '\n').trim();
 
   // 🧠 Caso 1: usuário já separou por estrofes (linha em branco)
   let blocks = normalized.split(/\n\s*\n/).filter(Boolean);
-
   let autoSeparated = false;
 
   // 🧠 Caso 2: não tem estrofes → separar a cada 4 linhas
@@ -41,7 +41,7 @@ const processPastedLyrics = (text) => {
   }
 
   const verses = blocks.map((block, index) => ({
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     text: block.trim(),
     order: index,
     startTime: '',
@@ -100,6 +100,7 @@ export const useEditorStore = create((set, get) => ({
     set({
       verses: verses.map((v, i) => ({
         ...v,
+        id: v.id || crypto.randomUUID(),
         order: i,
         style: { ...DEFAULT_STYLE, ...(v.style || {}) }
       })),
@@ -131,7 +132,7 @@ export const useEditorStore = create((set, get) => ({
         ...state.verses,
         {
           ...verse,
-          id: verse.id || uuidv4(),
+          id: verse.id || crypto.randomUUID(),
           order: state.verses.length,
           style: { ...DEFAULT_STYLE, ...(verse.style || {}) }
         }
@@ -165,6 +166,7 @@ export const useEditorStore = create((set, get) => ({
     set({
       verses: verses.map((v, i) => ({
         ...v,
+        id: v.id || crypto.randomUUID(),
         order: i,
         style: { ...DEFAULT_STYLE, ...(v.style || {}) }
       }))
