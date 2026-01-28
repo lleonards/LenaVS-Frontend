@@ -29,7 +29,8 @@ function UploadPanel() {
   // ===============================
   const handleAudioUpload = async (file, type) => {
     try {
-      const response = await uploadService.audio(file);
+      // ✅ CORREÇÃO AQUI
+      const response = await uploadService.audio(file, type);
 
       const fileData = {
         ...response.data.file,
