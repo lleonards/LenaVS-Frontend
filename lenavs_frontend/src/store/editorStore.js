@@ -14,6 +14,29 @@ const DEFAULT_STYLE = {
   transition: 'fade'
 };
 
+// ✂️ Utilitário: quebra texto longo em linhas artificiais
+const breakLongTextIntoLines = (text, maxChars = 120) => {
+  const words = text.split(' ');
+  const lines = [];
+
+  let currentLine = '';
+
+  for (const word of words) {
+    if ((currentLine + word).length > maxChars) {
+      lines.push(currentLine.trim());
+      currentLine = word + ' ';
+    } else {
+      currentLine += word + ' ';
+    }
+  }
+
+  if (currentLine.trim()) {
+    lines.push(currentLine.trim());
+  }
+
+  return lines;
+};
+
 // ✂️ Processa letra colada manualmente
 const processPastedLyrics = (text) => {
   if (!text || typeof text !== 'string') {
@@ -21,15 +44,22 @@ const processPastedLyrics = (text) => {
   }
 
   const normalized = text.replace(/\r\n/g, '\n').trim();
-
-  // 🧠 Caso 1: usuário já separou por estrofes (linha em branco)
-  let blocks = normalized.split(/\n\s*\n/).filter(Boolean);
   let autoSeparated = false;
 
-  // 🧠 Caso 2: não tem estrofes → separar a cada 4 linhas
-  if (blocks.length === 1) {
-    const lines = normalized.split('\n').filter(l => l.trim() !== '');
+  // 🧠 Caso 1: já tem estrofes (linha em branco)
+  let blocks = normalized.split(/\n\s*\n/).filter(Boolean);
 
+  // 🧠 Caso 2: só uma estrofe
+  if (blocks.length === 1) {
+    let lines = normalized.split('\n').filter(l => l.trim() !== '');
+
+    // 🧠 Caso 2.1: texto veio todo em uma linha (prompt bug)
+    if (lines.length === 1) {
+      lines = breakLongTextIntoLines(lines[0]);
+      autoSeparated = true;
+    }
+
+    // 🧠 Regra final: blocos de 4 linhas
     if (lines.length > 4) {
       autoSeparated = true;
       blocks = [];
@@ -52,7 +82,7 @@ const processPastedLyrics = (text) => {
   return { verses, autoSeparated };
 };
 
-export const useEditorStore = create((set, get) => ({
+export const useEditorStore = create((set) => ({
   // =========================
   // Project info
   // =========================
@@ -95,7 +125,7 @@ export const useEditorStore = create((set, get) => ({
 
   setBackgroundColor: (color) => set({ backgroundColor: color }),
 
-  // 🔥 USADO PELO UPLOAD DE ARQUIVO
+  // 🔥 Upload de letras (backend manda pronto)
   setVerses: (verses) =>
     set({
       verses: verses.map((v, i) => ({
@@ -107,7 +137,7 @@ export const useEditorStore = create((set, get) => ({
       hasLyrics: verses.length > 0
     }),
 
-  // 🔥 USADO PELO BOTÃO "COLAR TEXTO"
+  // 🔥 Colar texto manualmente
   setLyricsFromText: (text) => {
     const { verses, autoSeparated } = processPastedLyrics(text);
 
@@ -120,7 +150,7 @@ export const useEditorStore = create((set, get) => ({
       setTimeout(() => {
         alert(
           'A letra não estava separada em estrofes.\n' +
-          'O sistema dividiu automaticamente em blocos de 4 linhas.'
+          'O sistema organizou automaticamente em blocos de 4 linhas.'
         );
       }, 100);
     }
