@@ -25,6 +25,7 @@ function UploadPanel() {
     setVerses
   } = useEditorStore();
 
+  // 🔥 modal letra
   const [showLyricsModal, setShowLyricsModal] = useState(false);
   const [lyricsText, setLyricsText] = useState('');
 
@@ -113,9 +114,9 @@ function UploadPanel() {
   });
 
   // ===============================
-  // MANUAL TEXT
+  // MANUAL LYRICS
   // ===============================
-  const handleSubmitLyricsText = async () => {
+  const submitLyricsText = async () => {
     if (!lyricsText.trim()) return;
 
     try {
@@ -132,6 +133,72 @@ function UploadPanel() {
     <div className="upload-panel">
       <h2 className="panel-title">Arquivos</h2>
 
+      {/* AUDIO ORIGINAL */}
+      <div className="upload-section">
+        <h3 className="section-title">
+          <Music size={18} /> Música Original
+        </h3>
+        <div {...AudioOriginalDropzone.getRootProps()} className={`dropzone ${audioOriginal ? 'uploaded' : ''}`}>
+          <input {...AudioOriginalDropzone.getInputProps()} />
+          {audioOriginal ? (
+            <>
+              <Check size={24} />
+              <span>{audioOriginal.originalName}</span>
+            </>
+          ) : (
+            <>
+              <Upload size={24} />
+              <span>Arraste ou clique</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* AUDIO INSTRUMENTAL */}
+      <div className="upload-section">
+        <h3 className="section-title">
+          <FileMusic size={18} /> Música Instrumental
+        </h3>
+        <div {...AudioInstrumentalDropzone.getRootProps()} className={`dropzone ${audioInstrumental ? 'uploaded' : ''}`}>
+          <input {...AudioInstrumentalDropzone.getInputProps()} />
+          {audioInstrumental ? (
+            <>
+              <Check size={24} />
+              <span>{audioInstrumental.originalName}</span>
+            </>
+          ) : (
+            <>
+              <Upload size={24} />
+              <span>Arraste ou clique</span>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* VIDEO */}
+      <div className="upload-section">
+        <h3 className="section-title">
+          <Video size={18} /> Vídeo (Opcional)
+        </h3>
+        <div {...VideoDropzone.getRootProps()} className={`dropzone ${background?.type === 'video' ? 'uploaded' : ''}`}>
+          <input {...VideoDropzone.getInputProps()} />
+          <Upload size={24} />
+          <span>Arraste ou clique</span>
+        </div>
+      </div>
+
+      {/* IMAGE */}
+      <div className="upload-section">
+        <h3 className="section-title">
+          <Image size={18} /> Imagem (Opcional)
+        </h3>
+        <div {...ImageDropzone.getRootProps()} className={`dropzone ${background?.type === 'image' ? 'uploaded' : ''}`}>
+          <input {...ImageDropzone.getInputProps()} />
+          <Upload size={24} />
+          <span>Arraste ou clique</span>
+        </div>
+      </div>
+
       {/* LYRICS */}
       <div className="upload-section">
         <h3 className="section-title">
@@ -146,15 +213,12 @@ function UploadPanel() {
 
         <div className="divider">ou</div>
 
-        <button
-          className="text-button"
-          onClick={() => setShowLyricsModal(true)}
-        >
+        <button className="text-button" onClick={() => setShowLyricsModal(true)}>
           Colar texto manualmente
         </button>
       </div>
 
-      {/* MODAL */}
+      {/* MODAL LETRA */}
       {showLyricsModal && (
         <div className="lyrics-modal-backdrop">
           <div className="lyrics-modal">
@@ -166,14 +230,14 @@ function UploadPanel() {
             </div>
 
             <textarea
+              rows={12}
               value={lyricsText}
               onChange={(e) => setLyricsText(e.target.value)}
-              placeholder="Cole a letra aqui, com Enter normal entre os versos..."
-              rows={12}
+              placeholder="Cole a letra aqui com Enter normal entre os versos"
             />
 
             <div className="modal-actions">
-              <button onClick={handleSubmitLyricsText}>Confirmar</button>
+              <button onClick={submitLyricsText}>Confirmar</button>
             </div>
           </div>
         </div>
