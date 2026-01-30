@@ -23,7 +23,7 @@ function UploadPanel() {
     setAudioInstrumental,
     setBackground,
     setVerses,
-    setLyricsFromText // 🔥 IMPORTANTE
+    setLyricsFromText
   } = useEditorStore();
 
   const [showLyricsModal, setShowLyricsModal] = useState(false);
@@ -65,12 +65,20 @@ function UploadPanel() {
   };
 
   // ===============================
-  // LYRICS FILE (UPLOAD)
+  // LYRICS FILE (UPLOAD CORRIGIDO)
   // ===============================
   const handleLyricsUpload = async (file) => {
     try {
       const response = await uploadService.lyricsFile(file);
-      setVerses(response.data.lyrics);
+
+      // 🔥 compatível com qualquer retorno do service
+      const lyrics = response.data?.lyrics || response.lyrics;
+
+      if (!lyrics || !Array.isArray(lyrics)) {
+        throw new Error('Formato inválido de letra');
+      }
+
+      setVerses(lyrics);
     } catch {
       alert('Erro ao fazer upload da letra');
     }
@@ -114,12 +122,12 @@ function UploadPanel() {
   });
 
   // ===============================
-  // MANUAL LYRICS (🔥 CORRIGIDO)
+  // MANUAL LYRICS (CORRETO)
   // ===============================
   const submitLyricsText = () => {
     if (!lyricsText.trim()) return;
 
-    // 🔥 PROCESSA NO FRONTEND
+    // 🔥 toda a lógica está no editorStore
     setLyricsFromText(lyricsText);
 
     setLyricsText('');
@@ -227,10 +235,10 @@ function UploadPanel() {
             </div>
 
             <textarea
-              rows={12}
+              rows={16}
               value={lyricsText}
               onChange={(e) => setLyricsText(e.target.value)}
-              placeholder="Cole a letra aqui usando ENTER para quebra de linha"
+              placeholder="Cole a letra aqui. Use ENTER para quebra de linha e uma linha em branco entre estrofes."
             />
 
             <div className="modal-actions">
