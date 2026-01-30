@@ -22,10 +22,10 @@ function UploadPanel() {
     setAudioOriginal,
     setAudioInstrumental,
     setBackground,
-    setVerses
+    setVerses,
+    setLyricsFromText // 🔥 IMPORTANTE
   } = useEditorStore();
 
-  // 🔥 modal letra
   const [showLyricsModal, setShowLyricsModal] = useState(false);
   const [lyricsText, setLyricsText] = useState('');
 
@@ -65,7 +65,7 @@ function UploadPanel() {
   };
 
   // ===============================
-  // LYRICS FILE
+  // LYRICS FILE (UPLOAD)
   // ===============================
   const handleLyricsUpload = async (file) => {
     try {
@@ -114,19 +114,16 @@ function UploadPanel() {
   });
 
   // ===============================
-  // MANUAL LYRICS
+  // MANUAL LYRICS (🔥 CORRIGIDO)
   // ===============================
-  const submitLyricsText = async () => {
+  const submitLyricsText = () => {
     if (!lyricsText.trim()) return;
 
-    try {
-      const response = await uploadService.lyricsText(lyricsText);
-      setVerses(response.data.lyrics);
-      setLyricsText('');
-      setShowLyricsModal(false);
-    } catch {
-      alert('Erro ao processar letra');
-    }
+    // 🔥 PROCESSA NO FRONTEND
+    setLyricsFromText(lyricsText);
+
+    setLyricsText('');
+    setShowLyricsModal(false);
   };
 
   return (
@@ -233,7 +230,7 @@ function UploadPanel() {
               rows={12}
               value={lyricsText}
               onChange={(e) => setLyricsText(e.target.value)}
-              placeholder="Cole a letra aqui com Enter normal entre os versos"
+              placeholder="Cole a letra aqui usando ENTER para quebra de linha"
             />
 
             <div className="modal-actions">
